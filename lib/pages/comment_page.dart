@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:task8_advanced_api/models/comment_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task8_advanced_api/bloc/comment_bloc.dart';
 import 'package:task8_advanced_api/services/api_services.dart';
 
 class CommentPage extends StatelessWidget {
@@ -9,30 +10,35 @@ class CommentPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Comments'),
-      ),
-      body: FutureBuilder<List<Comment>>(
-        future: ApiService().getComments(postId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            return ListView.builder(
-              itemCount: snapshot.data?.length ?? 0,
-              itemBuilder: (context, index) {
-                Comment comment = snapshot.data![index];
-                return ListTile(
-                  title: Text(comment.name),
-                  subtitle: Text(comment.body),
+    return BlocProvider(
+      create: (context) => CommentBloc(ApiService())..add(GetCommentsEvent()),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Comments')),
+        body: BlocBuilder<CommentBloc, CommentState>(
+          builder: (context, state) {
+            if (state is CommentLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is CommentError) {
+              return Center(child: Text(state.message));
+            } else if (state is CommentLoaded) {
+              if (state.comments.isEmpty) {
+                return const Center(child: Text('No comments found'));
+              } else {
+                return ListView.builder(
+                  itemCount: state.comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = state.comments[index];
+                    return ListTile(
+                      title: Text(comment.name),
+                      subtitle: Text(comment.body),
+                    );
+                  },
                 );
-              },
-            );
-          }
-        },
+              }
+            }
+            return Container();
+          },
+        ),
       ),
     );
   }
