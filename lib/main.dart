@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task8_advanced_api/bloc/comment_bloc.dart';
+import 'package:task8_advanced_api/bloc/post_bloc.dart';
 import 'package:task8_advanced_api/pages/home_page.dart';
+import 'package:task8_advanced_api/services/api_services.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) => PostBloc(ApiService())..add(GetPostsEvent()),
+      ),
+      BlocProvider(
+        create: (context) => CommentBloc(ApiService())..add(GetCommentsEvent()),
+      ),
+    ],
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
